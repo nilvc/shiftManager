@@ -55,6 +55,9 @@ public class ShiftService {
         return shiftRepository.findById(shiftId).orElseThrow(() -> new RuntimeException("Invalid shift id " + shiftId));
     }
 
+    public List<Shift> getShiftsForEmployee(int employeeId){
+        return shiftRepository.findByEmployeeId(employeeId);
+    }
 
 }
 

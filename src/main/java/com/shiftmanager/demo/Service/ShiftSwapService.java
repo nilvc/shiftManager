@@ -101,4 +101,8 @@ public class ShiftSwapService {
     public List<ShiftChangeRequest> getAllShiftForEmployee(int employeeId){
         return shiftChangeRequestRepository.findByEmployeeId1OrEmployeeId2(employeeId,employeeId);
     }
+
+    public List<ShiftChangeRequest> getAllOpenShiftRequests(){
+        return shiftChangeRequestRepository.findByStatus(ShiftChangeStatus.PENDING);
+    }
 }

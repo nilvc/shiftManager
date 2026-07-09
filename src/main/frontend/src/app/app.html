@@ -1,0 +1,150 @@
+<main class="shell">
+  <section class="topbar">
+    <div>
+      <p class="eyebrow">Shift Manager</p>
+      <h1>Shift change requests</h1>
+    </div>
+
+    <div class="view-switch" aria-label="View selector">
+      <button type="button" [class.active]="activeView() === 'employee'" (click)="showView('employee')">
+        Employee
+      </button>
+      <button type="button" [class.active]="activeView() === 'manager'" (click)="showView('manager')">
+        Manager
+      </button>
+    </div>
+  </section>
+
+  <section class="utility-band">
+    <div>
+      <strong>Demo data</strong>
+      <span>Creates the sample employees and shifts from your Spring Boot services.</span>
+    </div>
+    <button type="button" class="secondary" (click)="createDemoData()">Seed demo data</button>
+  </section>
+  <p class="message" *ngIf="setupMessage()">{{ setupMessage() }}</p>
+
+  <section *ngIf="activeView() === 'employee'" class="workspace">
+    <div class="employee-main">
+      <div class="panel">
+        <h2>Request a shift swap</h2>
+        <form [formGroup]="employeeForm" (ngSubmit)="submitRequest()" class="form-grid">
+          <label>
+            Your employee ID
+            <input type="number" formControlName="employeeId1" min="1">
+          </label>
+
+          <label>
+            Your shift ID
+            <input type="number" formControlName="changeShiftId1" min="1">
+          </label>
+
+          <label>
+            Target employee ID
+            <input type="number" formControlName="employeeId2" min="1">
+          </label>
+
+          <label>
+            Target shift ID
+            <input type="number" formControlName="changeShiftId2" min="1">
+          </label>
+
+          <button type="submit" class="primary">Submit request</button>
+        </form>
+        <p class="message" *ngIf="requestMessage()">{{ requestMessage() }}</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <h2>My shifts</h2>
+          <button type="button" class="secondary" (click)="loadMyShifts()">Refresh</button>
+        </div>
+
+        <div class="shift-list" *ngIf="shifts().length; else noShifts">
+          <article class="shift-card" *ngFor="let shift of shifts()">
+            <div>
+              <span class="status shift-status">{{ shift.status }}</span>
+              <h3>Shift #{{ shift.shiftId }}</h3>
+              <p>{{ shift.startTime | date:'medium' }} to {{ shift.endTime | date:'shortTime' }}</p>
+            </div>
+            <button type="button" class="secondary" (click)="employeeForm.patchValue({ changeShiftId1: shift.shiftId })">
+              Use
+            </button>
+          </article>
+        </div>
+
+        <ng-template #noShifts>
+          <p class="empty">{{ loadingShifts() ? 'Loading shifts...' : shiftMessage() || 'No shifts loaded yet.' }}</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <aside class="panel roster">
+      <h2>Employees</h2>
+      <div class="employee-list" *ngIf="employees().length; else noEmployees">
+        <div class="employee-row" *ngFor="let employee of employees()">
+          <span>{{ employee.name }}</span>
+          <small>#{{ employee.employeeID }} - {{ employee.managerId === -1 ? 'Manager' : 'Manager #' + employee.managerId }}</small>
+        </div>
+      </div>
+      <ng-template #noEmployees>
+        <p class="empty">No employees loaded yet.</p>
+      </ng-template>
+    </aside>
+  </section>
+
+  <section *ngIf="activeView() === 'manager'" class="workspace">
+    <div class="panel review-panel">
+      <div class="panel-heading">
+        <h2>Open requests</h2>
+        <button type="button" class="secondary" (click)="loadOpenRequests()">Refresh</button>
+      </div>
+
+      <form [formGroup]="resolveForm" class="manager-form">
+        <label>
+          Manager ID
+          <select formControlName="updatedBy">
+            <option *ngFor="let manager of managers()" [value]="manager.employeeID">
+              {{ manager.name }} (#{{ manager.employeeID }})
+            </option>
+            <option *ngIf="!managers().length" [value]="1">Manager #1</option>
+          </select>
+        </label>
+
+        <label>
+          Comment
+          <textarea formControlName="comment" rows="3" placeholder="Add a review note"></textarea>
+        </label>
+      </form>
+
+      <div class="request-list" *ngIf="requests().length; else emptyQueue">
+        <article class="request-card" *ngFor="let request of requests()">
+          <div>
+            <span class="status">{{ request.status }}</span>
+            <h3>Request #{{ request.requestId }}</h3>
+            <p>
+              {{ employeeName(request.employeeId1) }} wants shift #{{ request.changeShiftId1 }}
+              swapped with {{ employeeName(request.employeeId2) }} shift #{{ request.changeShiftId2 }}.
+            </p>
+            <small>Created {{ request.createdAt | date:'medium' }}</small>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="approve" [disabled]="selectedRequestId() === request.requestId" (click)="resolveRequest(request, 'APPROVED')">
+              Approve
+            </button>
+            <button type="button" class="reject" [disabled]="selectedRequestId() === request.requestId" (click)="resolveRequest(request, 'REJECTED')">
+              Reject
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptyQueue>
+        <p class="empty">{{ loadingRequests() ? 'Loading requests...' : 'No open shift change requests.' }}</p>
+      </ng-template>
+
+      <p class="message" *ngIf="managerMessage()">{{ managerMessage() }}</p>
+    </div>
+  </section>
+</main>

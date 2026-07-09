@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+data/
+
+
+# Ignore only compiled frontend bundles
+/src/main/resources/static/*.js
+/src/main/resources/static/*.css
+/src/main/resources/static/index.html

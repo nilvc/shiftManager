@@ -1,0 +1,15 @@
+.git
+.idea
+.vscode
+.agents
+.codex
+
+target
+data
+
+src/main/frontend/node_modules
+src/main/frontend/.angular
+src/main/frontend/dist
+
+*.log
+*.tmp
