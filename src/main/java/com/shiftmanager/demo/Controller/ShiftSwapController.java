@@ -40,6 +40,11 @@ public class ShiftSwapController {
         return ResponseEntity.ok(shiftSwapService.getAllOpenShiftRequests());
     }
 
+    @GetMapping("/resolved")
+    public ResponseEntity<List<ShiftChangeRequest>> getAllResolvedSwapRequests(){
+        return ResponseEntity.ok(shiftSwapService.getAllResolvedShiftRequests());
+    }
+
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<List<ShiftChangeRequest>> getAllPendingSwapRequest(@PathVariable int employeeId){
         return ResponseEntity.ok(shiftSwapService.getAllShiftForEmployee(employeeId));

@@ -23,12 +23,15 @@ public class ShiftChangeRequest {
     ShiftChangeStatus status = ShiftChangeStatus.PENDING;
     Integer updatedBy;
     LocalDateTime updateTime;
+    @Column(nullable = false)
     int changeShiftId1;
+    @Column(nullable = false)
     int changeShiftId2;
+    @Column(nullable = false)
     int employeeId1;
+    @Column(nullable = false)
     int employeeId2;
     String comment;
-    @Column(nullable = false)
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();
 }
