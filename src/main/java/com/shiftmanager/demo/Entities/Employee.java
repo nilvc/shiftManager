@@ -17,6 +17,7 @@ public class Employee {
     int employeeID;
     @Column(nullable = false)
     String name;
+    @Column(name = "email", unique = true, nullable = false)
     String email;
     int managerId;
 }

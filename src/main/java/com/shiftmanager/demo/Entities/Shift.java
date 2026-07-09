@@ -18,12 +18,13 @@ import java.time.LocalDateTime;
 public class Shift {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer shiftId; // <-- Changed from int to Integer (Defaults to null)
+    private Integer shiftId;
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     @Builder.Default
     private ShiftStatus status = ShiftStatus.PENDING;
-    private int employeeId; // Primitive int is fine here if employeeId can never be null
+    @Column(nullable = false)
+    private int employeeId; 
 }
 

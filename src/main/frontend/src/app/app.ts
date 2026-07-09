@@ -44,10 +44,13 @@ export class App {
   private readonly fb = inject(FormBuilder);
 
   protected readonly activeView = signal<'employee' | 'manager'>('employee');
+  protected readonly managerTab = signal<'open' | 'history'>('open');
   protected readonly employees = signal<Employee[]>([]);
   protected readonly shifts = signal<Shift[]>([]);
   protected readonly requests = signal<ShiftChangeRequest[]>([]);
+  protected readonly resolvedRequests = signal<ShiftChangeRequest[]>([]);
   protected readonly loadingRequests = signal(false);
+  protected readonly loadingResolvedRequests = signal(false);
   protected readonly loadingShifts = signal(false);
   protected readonly requestMessage = signal('');
   protected readonly shiftMessage = signal('');
@@ -80,8 +83,13 @@ export class App {
   protected showView(view: 'employee' | 'manager'): void {
     this.activeView.set(view);
     if (view === 'manager') {
-      this.loadOpenRequests();
+      this.loadManagerRequests();
     }
+  }
+
+  protected showManagerTab(tab: 'open' | 'history'): void {
+    this.managerTab.set(tab);
+    this.loadManagerRequests();
   }
 
   protected createDemoData(): void {
@@ -164,6 +172,23 @@ export class App {
     });
   }
 
+  protected loadResolvedRequests(): void {
+    this.loadingResolvedRequests.set(true);
+    this.managerMessage.set('');
+
+    this.http.get<ShiftChangeRequest[]>('/shiftsSwap/resolved').subscribe({
+      next: (requests) => {
+        this.resolvedRequests.set(requests);
+        this.loadingResolvedRequests.set(false);
+      },
+      error: (error) => {
+        this.resolvedRequests.set([]);
+        this.loadingResolvedRequests.set(false);
+        this.managerMessage.set(this.readError(error));
+      }
+    });
+  }
+
   protected resolveRequest(request: ShiftChangeRequest, status: 'APPROVED' | 'REJECTED'): void {
     if (this.resolveForm.invalid) {
       this.resolveForm.markAllAsTouched();
@@ -183,6 +208,7 @@ export class App {
         this.selectedRequestId.set(null);
         this.resolveForm.patchValue({ comment: '' });
         this.loadOpenRequests();
+        this.loadResolvedRequests();
       },
       error: (error) => {
         this.managerMessage.set(this.readError(error));
@@ -196,11 +222,47 @@ export class App {
     return employee ? `${employee.name} (#${employee.employeeID})` : `Employee #${employeeId}`;
   }
 
+  protected currentEmployee(): Employee | undefined {
+    return this.findEmployee(this.employeeForm.controls.employeeId1.value);
+  }
+
+  protected currentManager(): Employee | undefined {
+    return this.findEmployee(this.resolveForm.controls.updatedBy.value);
+  }
+
+  protected managerOpenRequests(): ShiftChangeRequest[] {
+    const managerId = this.resolveForm.controls.updatedBy.value;
+    return this.requests().filter((request) =>
+      this.findEmployee(request.employeeId1)?.managerId === managerId
+    );
+  }
+
+  protected reviewerName(employeeId?: number): string {
+    if (!employeeId) {
+      return 'Not recorded';
+    }
+
+    return this.employeeName(employeeId);
+  }
+
+  protected loadManagerRequests(): void {
+    if (this.managerTab() === 'history') {
+      this.loadResolvedRequests();
+      return;
+    }
+
+    this.loadOpenRequests();
+  }
+
   private loadEmployees(): void {
     this.http.get<Employee[]>('/employees/').subscribe({
       next: (employees) => this.employees.set(employees),
       error: () => this.employees.set([])
     });
+  }
+
+  private findEmployee(employeeId: number): Employee | undefined {
+    return this.employees().find((employee) => employee.employeeID === employeeId);
   }
 
   private readError(error: { error?: unknown; message?: string }): string {

@@ -10,4 +10,5 @@ import java.util.List;
 public interface ShiftChangeRequestRepository extends JpaRepository<ShiftChangeRequest, Integer> {
     List<ShiftChangeRequest> findByEmployeeId1OrEmployeeId2(int employeeId1, int employeeId2);
     List<ShiftChangeRequest> findByStatus(ShiftChangeStatus status);
+    List<ShiftChangeRequest> findByStatusInOrderByUpdateTimeDesc(List<ShiftChangeStatus> statuses);
 }
