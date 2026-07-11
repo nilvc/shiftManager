@@ -2,7 +2,6 @@ package com.shiftmanager.demo.Service;
 
 import com.shiftmanager.demo.Entities.DTOs.ShiftChangeRequestDTO;
 import com.shiftmanager.demo.Entities.DTOs.ShiftChangeRequestResolveDTO;
-import com.shiftmanager.demo.Entities.DTOs.ShiftDTO;
 import com.shiftmanager.demo.Entities.Employee;
 import com.shiftmanager.demo.Entities.Shift;
 import com.shiftmanager.demo.Entities.ShiftChangeRequest;
@@ -94,7 +93,7 @@ public class ShiftSwapService {
 
         }
         shiftChangeRequestRepository.save(shiftChangeRequest);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Shift change request approved");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Shift change request resolved");
     }
 
 
