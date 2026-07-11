@@ -1,6 +1,5 @@
 package com.shiftmanager.demo.Service;
 
-import com.shiftmanager.demo.Entities.DTOs.EmployeeDTO;
 import com.shiftmanager.demo.Entities.Employee;
 import com.shiftmanager.demo.Repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,6 @@ public class EmployeeService {
 
         Employee employee6 = new Employee(0,"Nilesh","Nilesh@gmail.com", 2);
         employeeRepository.save(employee6);
-
 
     }
 

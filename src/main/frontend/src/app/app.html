@@ -26,6 +26,15 @@
 
   <section *ngIf="activeView() === 'employee'" class="workspace">
     <div class="employee-main">
+      <div class="identity-panel">
+        <div>
+          <p class="eyebrow">Current employee</p>
+          <h2>{{ currentEmployee()?.name || 'Employee #' + employeeForm.controls.employeeId1.value }}</h2>
+          <small>{{ currentEmployee()?.email || 'Email unavailable' }}</small>
+        </div>
+        <span class="status">{{ currentEmployee()?.managerId === -1 ? 'Manager' : 'Employee' }}</span>
+      </div>
+
       <div class="panel">
         <h2>Request a shift swap</h2>
         <form [formGroup]="employeeForm" (ngSubmit)="submitRequest()" class="form-grid">
@@ -96,18 +105,27 @@
   <section *ngIf="activeView() === 'manager'" class="workspace">
     <div class="panel review-panel">
       <div class="panel-heading">
-        <h2>Open requests</h2>
-        <button type="button" class="secondary" (click)="loadOpenRequests()">Refresh</button>
+        <h2>{{ managerTab() === 'open' ? 'Open requests' : 'Request history' }}</h2>
+        <button type="button" class="secondary" (click)="loadManagerRequests()">Refresh</button>
       </div>
 
-      <form [formGroup]="resolveForm" class="manager-form">
+      <div class="tab-switch" aria-label="Manager request view">
+        <button type="button" [class.active]="managerTab() === 'open'" (click)="showManagerTab('open')">
+          Open
+        </button>
+        <button type="button" [class.active]="managerTab() === 'history'" (click)="showManagerTab('history')">
+          History
+        </button>
+      </div>
+
+      <form *ngIf="managerTab() === 'open'" [formGroup]="resolveForm" class="manager-form">
         <label>
           Manager ID
           <select formControlName="updatedBy">
-            <option *ngFor="let manager of managers()" [value]="manager.employeeID">
+            <option *ngFor="let manager of managers()" [ngValue]="manager.employeeID">
               {{ manager.name }} (#{{ manager.employeeID }})
             </option>
-            <option *ngIf="!managers().length" [value]="1">Manager #1</option>
+            <option *ngIf="!managers().length" [ngValue]="1">Manager #1</option>
           </select>
         </label>
 
@@ -117,7 +135,16 @@
         </label>
       </form>
 
-      <div class="request-list" *ngIf="requests().length; else emptyQueue">
+      <div *ngIf="managerTab() === 'open'" class="identity-panel manager-identity">
+        <div>
+          <p class="eyebrow">Current manager</p>
+          <h2>{{ currentManager()?.name || 'Manager #' + resolveForm.controls.updatedBy.value }}</h2>
+          <small>{{ currentManager()?.email || 'Email unavailable' }}</small>
+        </div>
+        <span class="status">Manager</span>
+      </div>
+
+      <div *ngIf="managerTab() === 'open' && requests().length" class="request-list">
         <article class="request-card" *ngFor="let request of requests()">
           <div>
             <span class="status">{{ request.status }}</span>
@@ -140,9 +167,34 @@
         </article>
       </div>
 
-      <ng-template #emptyQueue>
-        <p class="empty">{{ loadingRequests() ? 'Loading requests...' : 'No open shift change requests.' }}</p>
-      </ng-template>
+      <p *ngIf="managerTab() === 'open' && !requests().length" class="empty">
+        {{ loadingRequests() ? 'Loading requests...' : 'No open shift change requests.' }}
+      </p>
+
+      <div *ngIf="managerTab() === 'history' && resolvedRequests().length" class="request-list">
+        <article class="request-card history-card" *ngFor="let request of resolvedRequests()">
+          <div>
+            <span class="status" [class.approved-status]="request.status === 'APPROVED'" [class.rejected-status]="request.status === 'REJECTED'">
+              {{ request.status }}
+            </span>
+            <h3>Request #{{ request.requestId }}</h3>
+            <p>
+              {{ employeeName(request.employeeId1) }} shift #{{ request.changeShiftId1 }}
+              with {{ employeeName(request.employeeId2) }} shift #{{ request.changeShiftId2 }}.
+            </p>
+            <small>Resolved {{ request.updateTime | date:'medium' }} by {{ reviewerName(request.updatedBy) }}</small>
+          </div>
+
+          <div class="comment-block">
+            <strong>Comment</strong>
+            <p>{{ request.comment || 'No comment added.' }}</p>
+          </div>
+        </article>
+      </div>
+
+      <p *ngIf="managerTab() === 'history' && !resolvedRequests().length" class="empty">
+        {{ loadingResolvedRequests() ? 'Loading history...' : 'No approved or rejected requests yet.' }}
+      </p>
 
       <p class="message" *ngIf="managerMessage()">{{ managerMessage() }}</p>
     </div>

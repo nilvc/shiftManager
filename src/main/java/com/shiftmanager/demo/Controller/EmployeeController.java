@@ -2,6 +2,7 @@ package com.shiftmanager.demo.Controller;
 
 import com.shiftmanager.demo.Entities.Employee;
 import com.shiftmanager.demo.Service.EmployeeService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,12 @@ public class EmployeeController {
 
     @PostMapping("/setupDummyEmployees")
     public ResponseEntity<String> addDummyEmployes(){
-        employeeService.createAndAddEmployees();
-        return ResponseEntity.status(200).body("Employees added");
+        try {
+            employeeService.createAndAddEmployees();
+            return ResponseEntity.status(HttpStatus.OK).body("Employees added");
+        } catch (DataIntegrityViolationException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Employee already added");
+        }
     }
 
     @GetMapping("/")

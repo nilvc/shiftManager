@@ -71,6 +71,13 @@ public class ShiftSwapService {
         if(shiftChangeRequest.getStatus() != ShiftChangeStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Swap request is already resolved");
         }
+
+        Employee requestingEmployee = employeeRepository.findById(shiftChangeRequest.getEmployeeId1())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Requesting employee not found"));
+        if(requestingEmployee.getManagerId() != shiftChangeRequestResolveDTO.getUpdatedBy()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Only the requesting employee's manager can resolve this shift swap request");
+        }
+
         shiftChangeRequest.setStatus(shiftChangeRequestResolveDTO.getStatus());
         shiftChangeRequest.setComment(shiftChangeRequestResolveDTO.getComment());
         shiftChangeRequest.setUpdateTime(LocalDateTime.now());
@@ -93,7 +100,7 @@ public class ShiftSwapService {
 
         }
         shiftChangeRequestRepository.save(shiftChangeRequest);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Shift change request resolved");
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Shift change request " + shiftChangeRequestResolveDTO.getStatus().name().toLowerCase());
     }
 
 
@@ -103,5 +110,11 @@ public class ShiftSwapService {
 
     public List<ShiftChangeRequest> getAllOpenShiftRequests(){
         return shiftChangeRequestRepository.findByStatus(ShiftChangeStatus.PENDING);
+    }
+
+    public List<ShiftChangeRequest> getAllResolvedShiftRequests(){
+        return shiftChangeRequestRepository.findByStatusInOrderByUpdateTimeDesc(
+                List.of(ShiftChangeStatus.APPROVED, ShiftChangeStatus.REJECTED)
+        );
     }
 }
