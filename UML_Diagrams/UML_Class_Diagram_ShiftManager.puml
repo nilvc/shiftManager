@@ -1,0 +1,183 @@
+@startuml ShiftManagerClassDiagram
+title Shift Manager - Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+package "Controllers" #E3F2FD {
+  class EmployeeController <<RestController>> {
+    - employeeService: EmployeeService
+    + addDummyEmployes(): ResponseEntity<String>
+    + getAllEmployees(): List<Employee>
+    + getEmployeeById(employeeId: int): Employee
+  }
+
+  class ShiftController <<RestController>> {
+    - shiftService: ShiftService
+    + getShiftById(shiftId: int): Shift
+    + getShiftsForEmployee(employeeId: int): List<Shift>
+    + addDummyShifts(): ResponseEntity<String>
+  }
+
+  class ShiftSwapController <<RestController>> {
+    - shiftSwapService: ShiftSwapService
+    + swapShifts(request: ShiftChangeRequestDTO): ResponseEntity<String>
+    + resolveShiftSwaps(request: ShiftChangeRequestResolveDTO): ResponseEntity<String>
+    + getAllOpenSwapRequests(): ResponseEntity<List<ShiftChangeRequest>>
+    + getAllResolvedSwapRequests(): ResponseEntity<List<ShiftChangeRequest>>
+    + getAllPendingSwapRequest(employeeId: int): ResponseEntity<List<ShiftChangeRequest>>
+  }
+}
+
+package "Services" #E8F5E9 {
+  class EmployeeService <<Service>> {
+    - employeeRepository: EmployeeRepository
+    + createAndAddEmployees(): void
+    + getAllEmployees(): List<Employee>
+    + getAEmployeeById(employeeId: int): Optional<Employee>
+  }
+
+  class ShiftService <<Service>> {
+    - shiftRepository: ShiftRepository
+    + addShifts(): void
+    + getAllShifts(): List<Shift>
+    + getShiftById(shiftId: int): Shift
+    + getShiftsForEmployee(employeeId: int): List<Shift>
+  }
+
+  class ShiftSwapService <<Service>> {
+    - shiftChangeRequestRepository: ShiftChangeRequestRepository
+    - employeeRepository: EmployeeRepository
+    - shiftRepository: ShiftRepository
+    + createShitSwapRequest(request: ShiftChangeRequestDTO): ResponseEntity<String>
+    + resolveShiftSwapRequest(request: ShiftChangeRequestResolveDTO): ResponseEntity<String>
+    + getAllShiftForEmployee(employeeId: int): List<ShiftChangeRequest>
+    + getAllOpenShiftRequests(): List<ShiftChangeRequest>
+    + getAllResolvedShiftRequests(): List<ShiftChangeRequest>
+  }
+}
+
+package "Repositories" #FFF3E0 {
+  interface "JpaRepository<Employee, Integer>" as EmployeeJpaRepository
+  interface "JpaRepository<Shift, Integer>" as ShiftJpaRepository
+  interface "JpaRepository<ShiftChangeRequest, Integer>" as RequestJpaRepository
+
+  interface EmployeeRepository <<Repository>>
+  interface ShiftRepository <<Repository>> {
+    + findByEmployeeId(employeeId: int): List<Shift>
+  }
+  interface ShiftChangeRequestRepository <<Repository>> {
+    + findByEmployeeId1OrEmployeeId2(employeeId1: int, employeeId2: int): List<ShiftChangeRequest>
+    + findByStatus(status: ShiftChangeStatus): List<ShiftChangeRequest>
+    + findByStatusInOrderByUpdateTimeDesc(statuses: List<ShiftChangeStatus>): List<ShiftChangeRequest>
+  }
+
+  EmployeeRepository --|> EmployeeJpaRepository
+  ShiftRepository --|> ShiftJpaRepository
+  ShiftChangeRequestRepository --|> RequestJpaRepository
+}
+
+package "Domain" #F3E5F5 {
+  class Employee <<Entity>> {
+    ~ employeeID: int
+    ~ name: String
+    ~ email: String
+    ~ managerId: int
+  }
+
+  class Shift <<Entity>> {
+    - shiftId: Integer
+    - startTime: LocalDateTime
+    - endTime: LocalDateTime
+    - status: ShiftStatus
+    - employeeId: int
+  }
+
+  class ShiftChangeRequest <<Entity>> {
+    ~ requestId: Integer
+    ~ status: ShiftChangeStatus
+    ~ updatedBy: Integer
+    ~ updateTime: LocalDateTime
+    ~ changeShiftId1: int
+    ~ changeShiftId2: int
+    ~ employeeId1: int
+    ~ employeeId2: int
+    ~ comment: String
+    ~ createdAt: LocalDateTime
+  }
+
+  enum ShiftStatus {
+    COMPLETED
+    PENDING
+  }
+
+  enum ShiftChangeStatus {
+    PENDING
+    APPROVED
+    REJECTED
+  }
+}
+
+package "DTOs" #FCE4EC {
+  class EmployeeDTO {
+    ~ name: String
+    ~ email: String
+    ~ managerId: int
+  }
+
+  class ShiftDTO <<record>> {
+    + startTime: ZonedDateTime
+    + endTime: ZonedDateTime
+    + status: String
+    + employeeId: int
+  }
+
+  class ShiftChangeRequestDTO {
+    ~ changeShiftId1: Integer
+    ~ changeShiftId2: Integer
+    ~ employeeId1: Integer
+    ~ employeeId2: Integer
+  }
+
+  class ShiftChangeRequestResolveDTO {
+    ~ requestID: int
+    ~ status: ShiftChangeStatus
+    ~ updatedBy: int
+    ~ comment: String
+  }
+}
+
+EmployeeController --> EmployeeService
+ShiftController --> ShiftService
+ShiftSwapController --> ShiftSwapService
+
+EmployeeService --> EmployeeRepository
+ShiftService --> ShiftRepository
+ShiftSwapService --> ShiftChangeRequestRepository
+ShiftSwapService --> EmployeeRepository
+ShiftSwapService --> ShiftRepository
+
+EmployeeRepository --> Employee
+ShiftRepository --> Shift
+ShiftChangeRequestRepository --> ShiftChangeRequest
+
+Shift --> ShiftStatus
+ShiftChangeRequest --> ShiftChangeStatus
+ShiftChangeRequestResolveDTO --> ShiftChangeStatus
+ShiftSwapController ..> ShiftChangeRequestDTO
+ShiftSwapController ..> ShiftChangeRequestResolveDTO
+ShiftSwapService ..> ShiftChangeRequestDTO
+ShiftSwapService ..> ShiftChangeRequestResolveDTO
+
+' The entity model currently represents associations by ID fields, not JPA relations.
+Employee "0..1" ..> "0..*" Employee : managerId
+Employee "1" ..> "0..*" Shift : employeeId
+Employee "1" ..> "0..*" ShiftChangeRequest : employeeId1 / employeeId2
+Shift "1" ..> "0..*" ShiftChangeRequest : changeShiftId1 / changeShiftId2
+
+note bottom
+  Dashed domain links represent logical relationships stored as ID fields.
+  They are not @ManyToOne / @OneToMany JPA mappings in the current code.
+end note
+@enduml
