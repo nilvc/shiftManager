@@ -2,13 +2,26 @@
 
 Shift Manager is a Spring Boot application with an Angular frontend. Employees can request shift swaps, and managers can review open requests and approve or reject them with a comment.
 
+## Quick Guide 
+
+1. Deployed site link  -  https://shiftmanager-0kli.onrender.com/
+
+2. UML Diagrams folder location - shiftManager\UML_Diagrams
+
+3. API Endpoints summary is added in this readme file in below sections
+
+4. Deployment and rollback discussion document - shiftManager\DEPLOYMENT_AND_ROLLBACK_STRATEGY.md
+
+5. On the deployed site if data is not populated due to serivce restart please use "Seed demo data" button to populate Employees .
+
+
 ## Tech Stack
 
 - Java 17
 - Spring Boot 4.1.0
 - Spring Web MVC
 - Spring Data JPA
-- H2 file database
+- H2 file database ( We will move it to a standard sql database like Postgres)
 - Angular 20
 - Maven Wrapper
 
